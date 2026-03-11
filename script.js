@@ -1,7 +1,7 @@
 ﻿const state = {
   settings: {
-    playerCount: 4,
-    difficulty: "medium",
+    playerCount: 2,
+    difficulty: "low",
     mode: "mixed",
     totalRounds: 8,
     secondsPerRound: 15,
@@ -22,6 +22,8 @@ const elements = {
   teacherToggle: document.getElementById("teacher-toggle"),
   teacherClose: document.getElementById("teacher-close"),
   soundToggle: document.getElementById("sound-toggle"),
+  gameSoundToggle: document.getElementById("game-sound-toggle"),
+  homeButton: document.getElementById("home-button"),
   startButton: document.getElementById("start-button"),
   nextButton: document.getElementById("next-button"),
   restartButton: document.getElementById("restart-button"),
@@ -29,44 +31,20 @@ const elements = {
   playerTemplate: document.getElementById("player-card-template"),
   roundLabel: document.getElementById("round-label"),
   timerValue: document.getElementById("timer-value"),
-  questionTypeLabel: document.getElementById("question-type-label"),
   questionBadge: document.getElementById("question-badge"),
   questionTitle: document.getElementById("question-title"),
   questionBody: document.getElementById("question-body"),
   questionHint: document.getElementById("question-hint"),
   questionCard: document.getElementById("question-card"),
   roundFeedback: document.getElementById("round-feedback"),
-  playerCount: document.getElementById("player-count"),
-  difficulty: document.getElementById("difficulty"),
-  mode: document.getElementById("mode"),
-  roundCount: document.getElementById("round-count"),
 };
 
+const settingsGroups = document.querySelectorAll("[data-setting]");
+
 const difficultyConfig = {
-  low: {
-    label: "하",
-    readMin: 10000,
-    readMax: 99999999,
-    compareMin: 10000,
-    compareMax: 99999999,
-    closeGap: 9000,
-  },
-  medium: {
-    label: "중",
-    readMin: 100000,
-    readMax: 999999999,
-    compareMin: 100000,
-    compareMax: 9999999999,
-    closeGap: 900000,
-  },
-  high: {
-    label: "상",
-    readMin: 10000000,
-    readMax: 9999999999999,
-    compareMin: 10000000,
-    compareMax: 9999999999999,
-    closeGap: 900000000,
-  },
+  low: { label: "하", groups: [2], zeroChance: 0.05, compareGapDigits: 2 },
+  medium: { label: "중", groups: [2, 3], zeroChance: 0.2, compareGapDigits: 3 },
+  high: { label: "상", groups: [3, 4], zeroChance: 0.3, compareGapDigits: 4 },
 };
 
 const koreanDigits = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"];
@@ -76,16 +54,26 @@ const largeUnits = ["", "만", "억", "조"];
 elements.startButton.addEventListener("click", startGame);
 elements.nextButton.addEventListener("click", handleNextRound);
 elements.restartButton.addEventListener("click", resetToSetup);
+elements.homeButton.addEventListener("click", resetToSetup);
 elements.teacherToggle.addEventListener("click", toggleTeacherPanel);
 elements.teacherClose.addEventListener("click", closeTeacherPanel);
 elements.soundToggle.addEventListener("click", toggleSound);
+elements.gameSoundToggle.addEventListener("click", toggleSound);
+
+settingsGroups.forEach((group) => {
+  group.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-value]");
+    if (!button) {
+      return;
+    }
+    group.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
+    const key = group.dataset.setting;
+    state.settings[key] = Number.isNaN(Number(button.dataset.value)) ? button.dataset.value : Number(button.dataset.value);
+  });
+});
 
 function startGame() {
-  state.settings.playerCount = Number(elements.playerCount.value);
-  state.settings.difficulty = elements.difficulty.value;
-  state.settings.mode = elements.mode.value;
-  state.settings.totalRounds = Number(elements.roundCount.value);
-  state.settings.secondsPerRound = 15;
   state.currentRound = 0;
   state.players = Array.from({ length: state.settings.playerCount }, (_, index) => ({
     id: index + 1,
@@ -101,6 +89,7 @@ function startGame() {
   elements.setupPanel.classList.add("hidden");
   elements.gamePanel.classList.remove("hidden");
   elements.restartButton.classList.add("hidden");
+  syncSoundButtons();
   nextRound();
 }
 
@@ -118,11 +107,11 @@ function nextRound() {
   state.timeLeft = state.settings.secondsPerRound;
   state.currentQuestion = generateQuestion(state.settings.mode, state.settings.difficulty);
 
-  for (const player of state.players) {
+  state.players.forEach((player) => {
     player.answer = null;
     player.answeredAt = null;
     player.isCorrect = false;
-  }
+  });
 
   renderRound();
   playToneSequence([659.25], 0.05);
@@ -130,40 +119,50 @@ function nextRound() {
 }
 
 function renderRound() {
-  const { currentQuestion } = state;
+  const question = state.currentQuestion;
   elements.roundLabel.textContent = `${state.currentRound} / ${state.settings.totalRounds}`;
-  elements.questionTypeLabel.textContent = currentQuestion.type === "read" ? "읽기" : "비교";
-  elements.questionBadge.textContent = currentQuestion.type === "read" ? "읽기 문제" : "비교 문제";
-  elements.questionTitle.textContent = currentQuestion.prompt;
-  elements.questionHint.textContent = currentQuestion.hint;
-  elements.roundFeedback.textContent = "모두 함께 가장 빠르고 정확하게 답해 보세요.";
+  elements.questionBadge.textContent = question.badge;
+  elements.questionTitle.textContent = question.prompt;
+  elements.questionHint.textContent = question.hint;
+  elements.roundFeedback.textContent = "각자 자기 칸에서 답을 눌러 보세요. 빠를수록 점수가 더 높아요.";
   elements.nextButton.classList.add("hidden");
   elements.restartButton.classList.add("hidden");
   renderTimer();
-  renderQuestionBody();
+  renderQuestionBody(question);
   renderPlayers();
   animateQuestionCard();
 }
 
-function renderQuestionBody() {
-  const question = state.currentQuestion;
-  if (question.type === "read") {
-    elements.questionBody.textContent = formatNumber(question.number);
+function renderQuestionBody(question) {
+  if (question.type === "read-number") {
+    elements.questionBody.innerHTML = `<div class="question-number">${formatNumber(question.number)}</div>`;
+    return;
+  }
+
+  if (question.type === "write-number") {
+    elements.questionBody.innerHTML = `<div>${question.korean}</div>`;
     return;
   }
 
   elements.questionBody.innerHTML = `
     <div class="compare-layout">
-      <span>A. ${formatNumber(question.left)}</span>
-      <strong>?</strong>
-      <span>B. ${formatNumber(question.right)}</span>
+      <div class="compare-box">
+        <span class="compare-label">A</span>
+        <div>${question.leftDisplay}</div>
+      </div>
+      <div class="compare-symbol">?</div>
+      <div class="compare-box">
+        <span class="compare-label">B</span>
+        <div>${question.rightDisplay}</div>
+      </div>
     </div>
   `;
 }
 
 function renderPlayers() {
   elements.playerGrid.innerHTML = "";
-  for (const player of state.players) {
+
+  state.players.forEach((player) => {
     const fragment = elements.playerTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".player-card");
     const playerName = fragment.querySelector(".player-name");
@@ -182,18 +181,18 @@ function renderPlayers() {
       }
     }
 
-    state.currentQuestion.options.forEach((option, optionIndex) => {
+    state.currentQuestion.options.forEach((option, index) => {
       const button = document.createElement("button");
-      button.className = "answer-button";
       button.type = "button";
+      button.className = "answer-button";
       button.textContent = option.label;
       button.disabled = player.answer !== null || state.currentQuestion.reveal;
-      button.addEventListener("click", () => submitAnswer(player.id, optionIndex));
+      button.addEventListener("click", () => submitAnswer(player.id, index));
 
       if (state.currentQuestion.reveal) {
-        if (optionIndex === state.currentQuestion.correctIndex) {
+        if (index === state.currentQuestion.correctIndex) {
           button.classList.add("correct-answer");
-        } else if (optionIndex === player.answer && !player.isCorrect) {
+        } else if (index === player.answer && !player.isCorrect) {
           button.classList.add("wrong-answer");
         }
       }
@@ -202,7 +201,7 @@ function renderPlayers() {
     });
 
     elements.playerGrid.appendChild(fragment);
-  }
+  });
 }
 
 function submitAnswer(playerId, optionIndex) {
@@ -237,7 +236,7 @@ function startTimer() {
     renderTimer();
 
     if (state.timeLeft > 0 && state.timeLeft <= 3) {
-      playToneSequence([523.25], 0.025);
+      playToneSequence([523.25], 0.03);
     }
 
     if (state.timeLeft <= 0) {
@@ -247,7 +246,7 @@ function startTimer() {
 }
 
 function renderTimer() {
-  const ratio = (state.timeLeft / state.settings.secondsPerRound) * 100;
+  const ratio = (Math.max(0, state.timeLeft) / state.settings.secondsPerRound) * 100;
   elements.timerValue.textContent = String(Math.max(0, state.timeLeft));
   document.documentElement.style.setProperty("--timer-progress", ratio);
 }
@@ -265,7 +264,6 @@ function finishRound() {
   }
 
   if (state.currentRound < state.settings.totalRounds) {
-    elements.nextButton.textContent = "다음 문제";
     elements.nextButton.classList.remove("hidden");
   } else {
     showFinalResults();
@@ -274,11 +272,10 @@ function finishRound() {
 
 function buildRoundFeedback() {
   const question = state.currentQuestion;
-  const answerLabel = question.options[question.correctIndex].label;
+  const answer = question.options[question.correctIndex].label;
   const correctPlayers = state.players.filter((player) => player.isCorrect).length;
-
   return `
-    <strong>정답:</strong> ${answerLabel}<br>
+    <strong>정답:</strong> ${answer}<br>
     <strong>해설:</strong> ${question.explanation}<br>
     <strong>이번 라운드 정답 인원:</strong> ${correctPlayers}명 / ${state.players.length}명
   `;
@@ -311,24 +308,29 @@ function resetToSetup() {
 }
 
 function toggleTeacherPanel() {
-  const isHidden = elements.teacherPanel.classList.contains("hidden");
-  elements.teacherPanel.classList.toggle("hidden", !isHidden);
-  elements.teacherToggle.textContent = isHidden ? "교사용 설명 숨기기" : "교사용 설명 보기";
+  const willShow = elements.teacherPanel.classList.contains("hidden");
+  elements.teacherPanel.classList.toggle("hidden", !willShow);
 }
 
 function closeTeacherPanel() {
   elements.teacherPanel.classList.add("hidden");
-  elements.teacherToggle.textContent = "교사용 설명 보기";
 }
 
 function toggleSound() {
   state.soundEnabled = !state.soundEnabled;
-  elements.soundToggle.textContent = state.soundEnabled ? "효과음 켜짐" : "효과음 꺼짐";
-  elements.soundToggle.setAttribute("aria-pressed", String(state.soundEnabled));
+  syncSoundButtons();
   if (state.soundEnabled) {
     ensureAudioContext();
     playToneSequence([523.25, 659.25], 0.04);
   }
+}
+
+function syncSoundButtons() {
+  const label = state.soundEnabled ? "효과음 켜짐" : "효과음 꺼짐";
+  elements.soundToggle.textContent = label;
+  elements.gameSoundToggle.textContent = label;
+  elements.soundToggle.setAttribute("aria-pressed", String(state.soundEnabled));
+  elements.gameSoundToggle.setAttribute("aria-pressed", String(state.soundEnabled));
 }
 
 function ensureAudioContext() {
@@ -355,7 +357,6 @@ function playToneSequence(frequencies, duration = 0.05, type = "sine") {
   if (!state.soundEnabled) {
     return;
   }
-
   const context = ensureAudioContext();
   if (!context) {
     return;
@@ -363,152 +364,219 @@ function playToneSequence(frequencies, duration = 0.05, type = "sine") {
 
   const startAt = context.currentTime;
   frequencies.forEach((frequency, index) => {
-    const oscillator = context.createOscillator();
-    const gainNode = context.createGain();
-    oscillator.type = type;
-    oscillator.frequency.value = frequency;
-    gainNode.gain.setValueAtTime(0.0001, startAt + index * duration);
-    gainNode.gain.exponentialRampToValueAtTime(0.08, startAt + index * duration + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + index * duration + duration);
-    oscillator.connect(gainNode);
-    gainNode.connect(context.destination);
-    oscillator.start(startAt + index * duration);
-    oscillator.stop(startAt + index * duration + duration);
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    osc.type = type;
+    osc.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.0001, startAt + index * duration);
+    gain.gain.exponentialRampToValueAtTime(0.08, startAt + index * duration + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + index * duration + duration);
+    osc.connect(gain);
+    gain.connect(context.destination);
+    osc.start(startAt + index * duration);
+    osc.stop(startAt + index * duration + duration);
   });
 }
 
 function animateQuestionCard() {
   elements.questionCard.classList.remove("animate-in");
-  requestAnimationFrame(() => {
-    elements.questionCard.classList.add("animate-in");
-  });
+  requestAnimationFrame(() => elements.questionCard.classList.add("animate-in"));
 }
 
 function generateQuestion(mode, difficulty) {
-  const selectedMode = mode === "mixed" ? (Math.random() > 0.5 ? "read" : "compare") : mode;
-  return selectedMode === "read" ? createReadQuestion(difficulty) : createCompareQuestion(difficulty);
+  const candidates = {
+    mixed: ["read-number", "write-number", "compare-number", "compare-korean"],
+    read: ["read-number"],
+    write: ["write-number"],
+    compare: ["compare-number", "compare-korean"],
+  }[mode];
+
+  const type = pickRandom(candidates);
+
+  if (type === "read-number") {
+    return createReadQuestion(difficulty);
+  }
+  if (type === "write-number") {
+    return createWriteQuestion(difficulty);
+  }
+  if (type === "compare-number") {
+    return createCompareQuestion(difficulty, false);
+  }
+  return createCompareQuestion(difficulty, true);
 }
 
 function createReadQuestion(difficulty) {
-  const config = difficultyConfig[difficulty];
-  const number = createFriendlyNumber(config.readMin, config.readMax, difficulty);
-  const correctText = numberToKorean(number);
-  const wrongOptions = new Set();
+  const number = generateBigNumber(difficulty);
+  const correct = numberToKorean(number);
+  const distractors = new Set();
 
-  while (wrongOptions.size < 3) {
-    const variant = mutateReading(correctText);
-    if (variant !== correctText) {
-      wrongOptions.add(variant);
+  while (distractors.size < 3) {
+    const candidate = numberToKorean(createNearbyNumber(number, difficulty));
+    if (candidate !== correct) {
+      distractors.add(candidate);
     }
   }
 
   const options = shuffle([
-    { label: correctText, correct: true },
-    ...Array.from(wrongOptions, (label) => ({ label, correct: false })),
+    { label: correct, correct: true },
+    ...Array.from(distractors, (label) => ({ label, correct: false })),
   ]);
 
   return {
-    type: "read",
-    prompt: "아래 수를 바르게 읽은 것을 고르세요.",
-    hint: `${difficultyConfig[difficulty].label} 난이도 · 큰 수를 읽을 때는 만, 억, 조 단위로 끊어 보세요.`,
+    type: "read-number",
+    badge: "숫자 읽기",
+    prompt: "아래 숫자를 바르게 읽은 것을 고르세요.",
+    hint: `${difficultyConfig[difficulty].label} 난이도 · 만, 억, 조 단위로 끊어 읽어 보세요.`,
     number,
     options,
     correctIndex: options.findIndex((option) => option.correct),
-    explanation: `${formatNumber(number)}는 \"${correctText}\"라고 읽어요.`,
+    explanation: `${formatNumber(number)}는 "${correct}"라고 읽어요.`,
     reveal: false,
   };
 }
 
-function createCompareQuestion(difficulty) {
-  const config = difficultyConfig[difficulty];
-  let left = createFriendlyNumber(config.compareMin, config.compareMax, difficulty);
-  let right = createFriendlyNumber(config.compareMin, config.compareMax, difficulty);
+function createWriteQuestion(difficulty) {
+  const number = generateBigNumber(difficulty);
+  const korean = numberToKorean(number);
+  const distractors = new Set();
 
-  if (Math.random() < 0.2) {
-    right = left;
-  } else if (Math.abs(left - right) > config.closeGap && Math.random() > 0.4) {
-    right = left + randomInt(-config.closeGap, config.closeGap);
+  while (distractors.size < 3) {
+    const candidate = formatNumber(createNearbyNumber(number, difficulty));
+    if (candidate !== formatNumber(number)) {
+      distractors.add(candidate);
+    }
   }
 
-  if (right < config.compareMin) {
-    right = config.compareMin + randomInt(1, config.closeGap);
-  }
-  if (right > config.compareMax) {
-    right = config.compareMax - randomInt(1, config.closeGap);
-  }
+  const options = shuffle([
+    { label: formatNumber(number), correct: true },
+    ...Array.from(distractors, (label) => ({ label, correct: false })),
+  ]);
 
-  const relation = left === right ? "=" : left > right ? ">" : "<";
+  return {
+    type: "write-number",
+    badge: "한글 수를 숫자로",
+    prompt: "아래 한글 수를 숫자로 바르게 나타낸 것을 고르세요.",
+    hint: `${difficultyConfig[difficulty].label} 난이도 · 큰 단위를 먼저 읽고 뒤의 수를 이어 보세요.`,
+    korean,
+    options,
+    correctIndex: options.findIndex((option) => option.correct),
+    explanation: `"${korean}"는 숫자로 ${formatNumber(number)}입니다.`,
+    reveal: false,
+  };
+}
+
+function createCompareQuestion(difficulty, useKorean) {
+  const pair = generateComparePair(difficulty);
+  const leftDisplay = useKorean ? numberToKorean(pair.left) : formatNumber(pair.left);
+  const rightDisplay = useKorean ? numberToKorean(pair.right) : formatNumber(pair.right);
+  const relation = pair.left === pair.right ? "=" : pair.left > pair.right ? ">" : "<";
+
   const options = [
     { label: "A가 더 크다", value: ">" },
     { label: "B가 더 크다", value: "<" },
     { label: "두 수가 같다", value: "=" },
   ];
-  const correctIndex = options.findIndex((option) => option.value === relation);
 
   return {
-    type: "compare",
-    prompt: "두 수를 비교해 알맞은 답을 고르세요.",
-    hint: `${difficultyConfig[difficulty].label} 난이도 · 가장 큰 자리부터 차례대로 비교해 보세요.`,
-    left,
-    right,
+    type: useKorean ? "compare-korean" : "compare-number",
+    badge: useKorean ? "한글 수 비교" : "숫자 비교",
+    prompt: useKorean ? "두 한글 수를 비교해 알맞은 답을 고르세요." : "두 숫자를 비교해 알맞은 답을 고르세요.",
+    hint: `${difficultyConfig[difficulty].label} 난이도 · 가장 큰 자리부터 차례로 비교해 보세요.`,
+    leftDisplay,
+    rightDisplay,
     options,
-    correctIndex,
-    explanation: buildCompareExplanation(left, right),
+    correctIndex: options.findIndex((option) => option.value === relation),
+    explanation: buildCompareExplanation(pair.left, pair.right),
     reveal: false,
   };
+}
+
+function generateBigNumber(difficulty) {
+  const config = difficultyConfig[difficulty];
+  const groupCount = pickRandom(config.groups);
+  const groups = [];
+
+  for (let index = 0; index < groupCount; index += 1) {
+    if (index === 0) {
+      groups.push(randomInt(1, 9999));
+    } else {
+      const shouldZero = Math.random() < config.zeroChance;
+      groups.push(shouldZero ? 0 : randomInt(1, 9999));
+    }
+  }
+
+  if (groups.slice(1).every((group) => group === 0)) {
+    groups[groupCount - 1] = randomInt(1, 9999);
+  }
+
+  return groupsToNumber(groups);
+}
+
+function generateComparePair(difficulty) {
+  const left = generateBigNumber(difficulty);
+  const gapDigits = difficultyConfig[difficulty].compareGapDigits;
+  const magnitude = 10 ** randomInt(0, gapDigits);
+  const delta = randomInt(1, 9) * magnitude;
+  const direction = pickRandom([-1, 1]);
+  const equalChance = Math.random() < 0.15;
+  let right = equalChance ? left : Math.max(1, left + delta * direction);
+
+  if (right === left && !equalChance) {
+    right += 1;
+  }
+
+  return { left, right };
+}
+
+function createNearbyNumber(number, difficulty) {
+  const config = difficultyConfig[difficulty];
+  const groupCount = Math.max(2, String(number).length <= 8 ? 2 : String(number).length <= 12 ? 3 : 4);
+  const groups = numberToGroups(number, groupCount);
+  const changedIndex = randomInt(0, groups.length - 1);
+  const nextGroups = [...groups];
+  const change = pickRandom([-1, 1]) * randomInt(1, 8);
+
+  if (changedIndex === 0) {
+    nextGroups[changedIndex] = clamp(nextGroups[changedIndex] + change, 1, 9999);
+  } else {
+    nextGroups[changedIndex] = clamp(nextGroups[changedIndex] + change * (10 ** randomInt(0, 2)), 0, 9999);
+  }
+
+  let candidate = groupsToNumber(nextGroups);
+  if (candidate === number) {
+    candidate += 1;
+  }
+  if (candidate < 1) {
+    candidate = generateBigNumber(difficulty);
+  }
+  return candidate;
+}
+
+function numberToGroups(number, minimumGroups = 1) {
+  const groups = [];
+  let current = number;
+  while (current > 0) {
+    groups.unshift(current % 10000);
+    current = Math.floor(current / 10000);
+  }
+  while (groups.length < minimumGroups) {
+    groups.unshift(0);
+  }
+  return groups;
+}
+
+function groupsToNumber(groups) {
+  return groups.reduce((total, group) => total * 10000 + group, 0);
 }
 
 function buildCompareExplanation(left, right) {
   if (left === right) {
     return `${formatNumber(left)}와 ${formatNumber(right)}는 같은 수예요.`;
   }
-
   const biggerLabel = left > right ? "A" : "B";
   const biggerValue = left > right ? left : right;
   const smallerValue = left > right ? right : left;
-  return `${biggerLabel}의 수 ${formatNumber(biggerValue)}가 ${formatNumber(smallerValue)}보다 크므로 ${biggerLabel}가 더 커요.`;
-}
-
-function createFriendlyNumber(min, max, difficulty) {
-  let groups;
-
-  if (difficulty === "low") {
-    groups = [randomInt(1, 9999), randomInt(1, 9999)];
-  } else if (difficulty === "medium") {
-    groups = [randomInt(1, 9999), maybeZeroGroup(0.25), randomInt(1, 9999)];
-  } else {
-    groups = [randomInt(1, 9999), maybeZeroGroup(0.35), maybeZeroGroup(0.3), randomInt(1, 9999)];
-  }
-
-  let value = 0;
-  groups.forEach((group, index) => {
-    value += group * (10000 ** (groups.length - index - 1));
-  });
-
-  return clamp(value, min, max);
-}
-
-function maybeZeroGroup(probability) {
-  return Math.random() < probability ? 0 : randomInt(1, 9999);
-}
-
-function mutateReading(text) {
-  const replacements = [
-    ["조", "억"],
-    ["억", "만"],
-    ["만", "억"],
-    ["천", "백"],
-    ["백", "십"],
-    ["십", ""],
-  ];
-
-  for (const [from, to] of shuffle([...replacements])) {
-    if (text.includes(from)) {
-      return text.replace(from, to || " ").replace(/\s+/g, " ").trim();
-    }
-  }
-
-  return `${text} 일`;
+  return `${biggerLabel}의 수 ${formatNumber(biggerValue)}가 ${formatNumber(smallerValue)}보다 커요. 큰 자리부터 비교하면 차이를 확인할 수 있어요.`;
 }
 
 function numberToKorean(number) {
@@ -516,27 +584,17 @@ function numberToKorean(number) {
     return "영";
   }
 
-  const groups = [];
-  let current = number;
-  while (current > 0) {
-    groups.unshift(current % 10000);
-    current = Math.floor(current / 10000);
-  }
-
-  const result = groups
+  const groups = numberToGroups(number);
+  return groups
     .map((group, index) => {
       if (group === 0) {
         return "";
       }
-      const chunk = fourDigitToKorean(group);
-      const unit = largeUnits[groups.length - index - 1];
-      return `${chunk}${unit}`;
+      const unitIndex = groups.length - index - 1;
+      return `${fourDigitToKorean(group)}${largeUnits[unitIndex]}`;
     })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return result || "영";
+    .filter(Boolean)
+    .join(" ");
 }
 
 function fourDigitToKorean(number) {
@@ -564,6 +622,10 @@ function shuffle(array) {
     [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
   }
   return copy;
+}
+
+function pickRandom(array) {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 function randomInt(min, max) {

@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>큰 수 챔피언</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,118 +16,157 @@
         <p class="eyebrow">4학년 큰 수 읽기 · 비교 게임</p>
         <h1>큰 수 챔피언</h1>
         <p class="hero-text">
-          전자칠판이나 태블릿에서 최대 6명이 동시에 참여해
-          큰 수를 읽고, 비교하며 점수를 겨루는 수학 게임입니다.
+          큰 수를 읽고, 한글 수를 숫자로 바꾸고, 두 수를 비교하며
+          최대 6명이 동시에 실력을 겨루는 교실용 게임입니다.
         </p>
         <div class="hero-actions">
-          <button class="ghost-button" id="teacher-toggle" type="button">교사용 설명 보기</button>
+          <button class="ghost-button" id="teacher-toggle" type="button">교사용 설명</button>
           <button class="ghost-button" id="sound-toggle" type="button" aria-pressed="true">효과음 켜짐</button>
         </div>
       </div>
-      <div class="hero-card">
-        <p>성취기준 연결</p>
-        <ul>
-          <li>10000 이상의 큰 수를 읽기</li>
-          <li>자릿값과 수의 계열 이해하기</li>
-          <li>큰 수의 크기 비교하기</li>
-        </ul>
+
+      <div class="hero-visual">
+        <article class="feature-card warm">
+          <div class="feature-icon">6</div>
+          <div>
+            <h3>동시 대결</h3>
+            <p>최대 6명이 한 화면에서 빠르게 경쟁</p>
+          </div>
+        </article>
+        <article class="feature-card cool">
+          <div class="feature-icon">조</div>
+          <div>
+            <h3>큰 수 범위</h3>
+            <p>만, 억, 조 단위까지 자연스럽게 학습</p>
+          </div>
+        </article>
+        <article class="feature-card mint">
+          <div class="feature-icon">가</div>
+          <div>
+            <h3>읽기와 쓰기</h3>
+            <p>숫자를 읽고 한글 수를 숫자로 바꾸기</p>
+          </div>
+        </article>
+        <article class="feature-card peach">
+          <div class="feature-icon">&gt;</div>
+          <div>
+            <h3>비교하기</h3>
+            <p>큰 자리부터 보고 빠르게 대소 판단</p>
+          </div>
+        </article>
       </div>
     </header>
 
     <section class="panel teacher-panel hidden" id="teacher-panel">
-      <div class="section-title teacher-title-row">
+      <div class="teacher-head">
         <div>
           <h2>교사용 설명</h2>
-          <p>수업 시작 전 바로 확인할 수 있는 진행 안내입니다.</p>
+          <p>수업 시작 전에 바로 보여주거나 진행 메모로 사용할 수 있습니다.</p>
         </div>
         <button class="ghost-button small-button" id="teacher-close" type="button">닫기</button>
       </div>
-
       <div class="teacher-grid">
         <article>
-          <h3>게임 목표</h3>
-          <p>학생이 큰 수를 만, 억, 조 단위로 끊어 읽고, 자릿값을 바탕으로 수의 크기를 빠르게 비교하도록 돕습니다.</p>
+          <h3>활동 목표</h3>
+          <p>학생이 자릿값을 바탕으로 큰 수를 읽고, 한글 수를 숫자로 바꾸며, 큰 수의 크기를 설명할 수 있게 돕습니다.</p>
         </article>
         <article>
-          <h3>진행 방법</h3>
-          <p>인원, 난이도, 문제 유형을 고른 뒤 시작합니다. 각 학생은 자기 칸에서 답을 누르고, 빠르고 정확할수록 더 높은 점수를 얻습니다.</p>
+          <h3>추천 운영</h3>
+          <p>처음 2문제는 함께 풀고, 이후부터는 경쟁 모드로 전환하면 학생들이 규칙을 빠르게 익힙니다.</p>
         </article>
         <article>
-          <h3>난이도 안내</h3>
-          <p>하: 만 단위 중심, 중: 억 단위와 0이 포함된 수, 상: 조 단위와 매우 비슷한 수 비교를 다룹니다.</p>
+          <h3>질문 포인트</h3>
+          <p>왜 그렇게 읽는지, 어느 자리에서 대소가 갈렸는지 학생에게 말로 설명하게 하면 성취기준과 더 잘 연결됩니다.</p>
         </article>
         <article>
-          <h3>수업 활용 팁</h3>
-          <p>정답 공개 후 왜 그렇게 읽는지, 어느 자리에서 대소가 갈리는지 학생에게 설명하게 하면 성취기준과 더 잘 연결됩니다.</p>
+          <h3>난이도 선택</h3>
+          <p>하: 만 단위 중심, 중: 억 단위와 0 포함, 상: 조 단위와 비슷한 수 비교까지 다룹니다.</p>
         </article>
       </div>
     </section>
 
     <main>
       <section class="panel setup-panel" id="setup-panel">
-        <div class="section-title">
-          <h2>게임 설정</h2>
-          <p>인원, 난이도, 문제 유형을 고르면 바로 시작할 수 있어요.</p>
+        <div class="section-title center-title">
+          <h2>빠르게 설정하고 바로 시작하기</h2>
+          <p>아이콘이 있는 버튼을 눌러 수업 상황에 맞게 고르세요.</p>
         </div>
 
-        <div class="setup-grid">
-          <label class="control">
-            <span>참가 인원</span>
-            <select id="player-count">
-              <option value="2">2명</option>
-              <option value="3">3명</option>
-              <option value="4" selected>4명</option>
-              <option value="5">5명</option>
-              <option value="6">6명</option>
-            </select>
-          </label>
-
-          <label class="control">
-            <span>난이도</span>
-            <select id="difficulty">
-              <option value="low">하</option>
-              <option value="medium" selected>중</option>
-              <option value="high">상</option>
-            </select>
-          </label>
-
-          <label class="control">
-            <span>문제 유형</span>
-            <select id="mode">
-              <option value="mixed" selected>혼합</option>
-              <option value="read">읽기</option>
-              <option value="compare">비교</option>
-            </select>
-          </label>
-
-          <label class="control">
-            <span>라운드 수</span>
-            <select id="round-count">
-              <option value="5">5문제</option>
-              <option value="8" selected>8문제</option>
-              <option value="10">10문제</option>
-              <option value="12">12문제</option>
-            </select>
-          </label>
+        <div class="setting-section">
+          <div class="setting-label-row">
+            <span class="setting-icon">인원</span>
+            <h3>참가 인원</h3>
+          </div>
+          <div class="choice-grid five" data-setting="playerCount">
+            <button class="choice-chip active" data-value="2" type="button">2명</button>
+            <button class="choice-chip" data-value="3" type="button">3명</button>
+            <button class="choice-chip" data-value="4" type="button">4명</button>
+            <button class="choice-chip" data-value="5" type="button">5명</button>
+            <button class="choice-chip" data-value="6" type="button">6명</button>
+          </div>
         </div>
 
-        <div class="difficulty-guide">
-          <article>
-            <h3>하</h3>
-            <p>자리 수가 비교적 단순하고, 읽기 쉬운 큰 수 중심</p>
-          </article>
-          <article>
-            <h3>중</h3>
-            <p>0이 섞인 수와 억 단위까지 포함된 문제</p>
-          </article>
-          <article>
-            <h3>상</h3>
-            <p>조 단위까지, 비슷한 수를 빠르게 읽고 비교하는 도전</p>
-          </article>
+        <div class="setting-section">
+          <div class="setting-label-row">
+            <span class="setting-icon">난이도</span>
+            <h3>난이도</h3>
+          </div>
+          <div class="choice-grid three" data-setting="difficulty">
+            <button class="choice-card active" data-value="low" type="button">
+              <strong>하</strong>
+              <span>만 단위 중심</span>
+            </button>
+            <button class="choice-card" data-value="medium" type="button">
+              <strong>중</strong>
+              <span>억 단위와 0 포함</span>
+            </button>
+            <button class="choice-card" data-value="high" type="button">
+              <strong>상</strong>
+              <span>조 단위와 근접 비교</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <div class="setting-label-row">
+            <span class="setting-icon">유형</span>
+            <h3>문제 유형</h3>
+          </div>
+          <div class="choice-grid four" data-setting="mode">
+            <button class="choice-card active" data-value="mixed" type="button">
+              <strong>혼합</strong>
+              <span>모든 유형이 섞여 나와요</span>
+            </button>
+            <button class="choice-card" data-value="read" type="button">
+              <strong>읽기</strong>
+              <span>숫자를 보고 읽기</span>
+            </button>
+            <button class="choice-card" data-value="write" type="button">
+              <strong>숫자 쓰기</strong>
+              <span>한글 수를 숫자로 바꾸기</span>
+            </button>
+            <button class="choice-card" data-value="compare" type="button">
+              <strong>비교</strong>
+              <span>두 수의 크기 비교하기</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <div class="setting-label-row">
+            <span class="setting-icon">라운드</span>
+            <h3>라운드 수</h3>
+          </div>
+          <div class="choice-grid four" data-setting="totalRounds">
+            <button class="choice-chip" data-value="5" type="button">5문제</button>
+            <button class="choice-chip active" data-value="8" type="button">8문제</button>
+            <button class="choice-chip" data-value="10" type="button">10문제</button>
+            <button class="choice-chip" data-value="12" type="button">12문제</button>
+          </div>
         </div>
 
         <div class="actions">
-          <button class="primary-button" id="start-button">게임 시작</button>
+          <button class="primary-button" id="start-button" type="button">게임 시작</button>
         </div>
       </section>
 
@@ -136,13 +178,11 @@
           </div>
           <div class="topbar-center">
             <p class="status-label">남은 시간</p>
-            <div class="timer-ring">
-              <span id="timer-value">15</span>
-            </div>
+            <div class="timer-ring"><span id="timer-value">15</span></div>
           </div>
-          <div>
-            <p class="status-label">문제 유형</p>
-            <h2 id="question-type-label">읽기</h2>
+          <div class="topbar-actions">
+            <button class="ghost-button small-button" id="home-button" type="button">처음 화면</button>
+            <button class="ghost-button small-button" id="game-sound-toggle" type="button">효과음 켜짐</button>
           </div>
         </div>
 
@@ -157,8 +197,8 @@
 
         <div class="round-feedback" id="round-feedback"></div>
         <div class="actions split">
-          <button class="ghost-button hidden" id="next-button">다음 문제</button>
-          <button class="ghost-button hidden" id="restart-button">처음으로</button>
+          <button class="ghost-button hidden" id="next-button" type="button">다음 문제</button>
+          <button class="ghost-button hidden" id="restart-button" type="button">처음으로</button>
         </div>
       </section>
     </main>
