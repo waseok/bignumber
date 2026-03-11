@@ -167,9 +167,14 @@ function renderQuestionBody(question) {
 function renderPlayers() {
   elements.playerGrid.innerHTML = "";
 
+  const fastestCorrect = [...state.players]
+    .filter((entry) => entry.isCorrect && entry.answerOrder !== null)
+    .sort((a, b) => a.answerOrder - b.answerOrder)[0];
+
   state.players.forEach((player) => {
     const fragment = elements.playerTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".player-card");
+    const bonusBadge = fragment.querySelector(".bonus-badge");
     const playerName = fragment.querySelector(".player-name");
     const scorePill = fragment.querySelector(".score-pill");
     const answerGrid = fragment.querySelector(".answer-grid");
@@ -189,6 +194,11 @@ function renderPlayers() {
       if (state.currentQuestion.reveal) {
         card.classList.add(player.isCorrect ? "correct" : "incorrect");
       }
+    }
+
+    if (state.currentQuestion.reveal && fastestCorrect && fastestCorrect.id === player.id) {
+      bonusBadge.classList.remove("hidden");
+      bonusBadge.innerHTML = '<span class="bonus-icon">1</span><strong>선착순 보너스</strong>';
     }
 
     state.currentQuestion.options.forEach((option, index) => {
@@ -291,13 +301,13 @@ function buildRoundFeedback() {
     .filter((player) => player.isCorrect)
     .sort((a, b) => a.answerOrder - b.answerOrder)[0];
   const bonusLine = fastestCorrect
-    ? `<strong>선착순 보너스:</strong> ${fastestCorrect.name}이 가장 먼저 정답을 맞혀 추가 점수를 받았어요.<br>`
+    ? `<div class="bonus-highlight"><div class="bonus-highlight-icon">1</div><div><strong>선착순 보너스</strong><span>${fastestCorrect.name}이 가장 먼저 정답을 맞혀 추가 점수를 받았어요.</span></div></div>`
     : "";
 
   return `
+    ${bonusLine}
     <strong>정답:</strong> ${answer}<br>
     <strong>해설:</strong> ${question.explanation}<br>
-    ${bonusLine}
     <strong>이번 라운드 정답 인원:</strong> ${correctPlayers}명 / ${state.players.length}명
   `;
 }
@@ -684,3 +694,5 @@ function randomInt(min, max) {
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
+
+
