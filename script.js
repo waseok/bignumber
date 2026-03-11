@@ -83,6 +83,7 @@ function startGame() {
     score: 0,
     answer: null,
     answeredAt: null,
+    answerOrder: null,
     isCorrect: false,
   }));
 
@@ -113,6 +114,7 @@ function nextRound() {
   state.players.forEach((player) => {
     player.answer = null;
     player.answeredAt = null;
+    player.answerOrder = null;
     player.isCorrect = false;
   });
 
@@ -127,7 +129,7 @@ function renderRound() {
   elements.questionBadge.textContent = question.badge;
   elements.questionTitle.textContent = question.prompt;
   elements.questionHint.textContent = `${question.hint} 제한 시간 ${state.settings.secondsPerRound}초`;
-  elements.roundFeedback.textContent = "각자 자기 칸에서 답을 눌러 보세요. 빠를수록 점수가 더 높아요.";
+  elements.roundFeedback.textContent = "각자 자기 칸에서 답을 눌러 보세요. 빠를수록 점수가 더 높고, 먼저 맞히면 가산점도 받아요.";
   elements.nextButton.classList.add("hidden");
   elements.restartButton.classList.add("hidden");
   renderTimer();
@@ -175,7 +177,12 @@ function renderPlayers() {
 
     playerName.textContent = player.name;
     scorePill.textContent = `${player.score}점`;
-    status.textContent = player.answer !== null ? "답을 골랐어요." : "아직 답을 고르지 않았어요.";
+
+    if (player.answer !== null && player.answerOrder !== null) {
+      status.textContent = `${player.answerOrder + 1}번째로 답했어요.`;
+    } else {
+      status.textContent = "아직 답을 고르지 않았어요.";
+    }
 
     if (player.answer !== null) {
       card.classList.add("answered");
@@ -216,10 +223,13 @@ function submitAnswer(playerId, optionIndex) {
   ensureAudioContext();
   player.answer = optionIndex;
   player.answeredAt = state.settings.secondsPerRound - state.timeLeft;
+  player.answerOrder = state.players.filter((entry) => entry.answer !== null).length - 1;
   player.isCorrect = optionIndex === state.currentQuestion.correctIndex;
 
   if (player.isCorrect) {
-    player.score += Math.max(10, state.settings.secondsPerRound + 7 - player.answeredAt);
+    const speedScore = Math.max(10, state.settings.secondsPerRound + 7 - player.answeredAt);
+    const orderBonus = Math.max(0, state.players.length - 1 - player.answerOrder) * 3;
+    player.score += speedScore + orderBonus;
     playToneSequence([784, 988], 0.04);
   } else {
     playToneSequence([294, 220], 0.05, "sawtooth");
@@ -277,9 +287,17 @@ function buildRoundFeedback() {
   const question = state.currentQuestion;
   const answer = question.options[question.correctIndex].label;
   const correctPlayers = state.players.filter((player) => player.isCorrect).length;
+  const fastestCorrect = [...state.players]
+    .filter((player) => player.isCorrect)
+    .sort((a, b) => a.answerOrder - b.answerOrder)[0];
+  const bonusLine = fastestCorrect
+    ? `<strong>선착순 보너스:</strong> ${fastestCorrect.name}이 가장 먼저 정답을 맞혀 추가 점수를 받았어요.<br>`
+    : "";
+
   return `
     <strong>정답:</strong> ${answer}<br>
     <strong>해설:</strong> ${question.explanation}<br>
+    ${bonusLine}
     <strong>이번 라운드 정답 인원:</strong> ${correctPlayers}명 / ${state.players.length}명
   `;
 }
