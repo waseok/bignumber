@@ -42,9 +42,9 @@ const elements = {
 const settingsGroups = document.querySelectorAll("[data-setting]");
 
 const difficultyConfig = {
-  low: { label: "하", groups: [2], zeroChance: 0.05, compareGapDigits: 2 },
-  medium: { label: "중", groups: [2, 3], zeroChance: 0.2, compareGapDigits: 3 },
-  high: { label: "상", groups: [3, 4], zeroChance: 0.3, compareGapDigits: 4 },
+  low: { label: "하", groups: [2], zeroChance: 0.05, compareGapDigits: 2, secondsPerRound: 30 },
+  medium: { label: "중", groups: [2, 3], zeroChance: 0.2, compareGapDigits: 3, secondsPerRound: 45 },
+  high: { label: "상", groups: [3, 4], zeroChance: 0.3, compareGapDigits: 4, secondsPerRound: 60 },
 };
 
 const koreanDigits = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"];
@@ -74,7 +74,9 @@ settingsGroups.forEach((group) => {
 });
 
 function startGame() {
+  state.settings.secondsPerRound = difficultyConfig[state.settings.difficulty].secondsPerRound;
   state.currentRound = 0;
+  state.timeLeft = state.settings.secondsPerRound;
   state.players = Array.from({ length: state.settings.playerCount }, (_, index) => ({
     id: index + 1,
     name: `플레이어 ${index + 1}`,
@@ -103,6 +105,7 @@ function handleNextRound() {
 
 function nextRound() {
   clearInterval(state.timerId);
+  state.settings.secondsPerRound = difficultyConfig[state.settings.difficulty].secondsPerRound;
   state.currentRound += 1;
   state.timeLeft = state.settings.secondsPerRound;
   state.currentQuestion = generateQuestion(state.settings.mode, state.settings.difficulty);
@@ -123,7 +126,7 @@ function renderRound() {
   elements.roundLabel.textContent = `${state.currentRound} / ${state.settings.totalRounds}`;
   elements.questionBadge.textContent = question.badge;
   elements.questionTitle.textContent = question.prompt;
-  elements.questionHint.textContent = question.hint;
+  elements.questionHint.textContent = `${question.hint} 제한 시간 ${state.settings.secondsPerRound}초`;
   elements.roundFeedback.textContent = "각자 자기 칸에서 답을 눌러 보세요. 빠를수록 점수가 더 높아요.";
   elements.nextButton.classList.add("hidden");
   elements.restartButton.classList.add("hidden");
@@ -216,7 +219,7 @@ function submitAnswer(playerId, optionIndex) {
   player.isCorrect = optionIndex === state.currentQuestion.correctIndex;
 
   if (player.isCorrect) {
-    player.score += Math.max(10, 22 - player.answeredAt);
+    player.score += Math.max(10, state.settings.secondsPerRound + 7 - player.answeredAt);
     playToneSequence([784, 988], 0.04);
   } else {
     playToneSequence([294, 220], 0.05, "sawtooth");
@@ -481,7 +484,7 @@ function createCompareQuestion(difficulty, useKorean) {
     type: useKorean ? "compare-korean" : "compare-number",
     badge: useKorean ? "한글 수 비교" : "숫자 비교",
     prompt: useKorean ? "두 한글 수를 비교해 알맞은 답을 고르세요." : "두 숫자를 비교해 알맞은 답을 고르세요.",
-    hint: `${difficultyConfig[difficulty].label} 난이도 · 가장 큰 자리부터 차례로 비교해 보세요.`,
+    hint: `${difficultyConfig[difficulty].label} 난이도 · 어떤 문제는 비슷한 수, 어떤 문제는 자리 수 자체가 다른 수가 나와요.`,
     leftDisplay,
     rightDisplay,
     options,
@@ -491,9 +494,9 @@ function createCompareQuestion(difficulty, useKorean) {
   };
 }
 
-function generateBigNumber(difficulty) {
+function generateBigNumber(difficulty, forcedGroupCount = null) {
   const config = difficultyConfig[difficulty];
-  const groupCount = pickRandom(config.groups);
+  const groupCount = forcedGroupCount ?? pickRandom(config.groups);
   const groups = [];
 
   for (let index = 0; index < groupCount; index += 1) {
@@ -513,23 +516,51 @@ function generateBigNumber(difficulty) {
 }
 
 function generateComparePair(difficulty) {
-  const left = generateBigNumber(difficulty);
-  const gapDigits = difficultyConfig[difficulty].compareGapDigits;
-  const magnitude = 10 ** randomInt(0, gapDigits);
-  const delta = randomInt(1, 9) * magnitude;
-  const direction = pickRandom([-1, 1]);
-  const equalChance = Math.random() < 0.15;
-  let right = equalChance ? left : Math.max(1, left + delta * direction);
+  const config = difficultyConfig[difficulty];
+  const compareStyle = Math.random();
 
-  if (right === left && !equalChance) {
-    right += 1;
+  if (compareStyle < 0.3) {
+    const leftGroupCount = pickRandom(config.groups);
+    let rightGroupCount = pickRandom(config.groups);
+    if (config.groups.length > 1) {
+      while (rightGroupCount === leftGroupCount) {
+        rightGroupCount = pickRandom(config.groups);
+      }
+    } else if (Math.random() < 0.5) {
+      rightGroupCount = Math.max(1, leftGroupCount - 1);
+    }
+
+    const left = generateBigNumber(difficulty, leftGroupCount);
+    const right = generateBigNumber(difficulty, rightGroupCount);
+    return { left, right };
+  }
+
+  if (compareStyle < 0.65) {
+    const base = generateBigNumber(difficulty);
+    const gapDigits = config.compareGapDigits;
+    const magnitude = 10 ** randomInt(0, gapDigits);
+    const delta = randomInt(1, 9) * magnitude;
+    const direction = pickRandom([-1, 1]);
+    let right = Math.max(1, base + delta * direction);
+    if (right === base) {
+      right += 1;
+    }
+    return { left: base, right };
+  }
+
+  const left = generateBigNumber(difficulty);
+  let right = generateBigNumber(difficulty);
+
+  if (Math.random() < 0.15) {
+    right = left;
+  } else if (right === left) {
+    right = createNearbyNumber(left, difficulty);
   }
 
   return { left, right };
 }
 
 function createNearbyNumber(number, difficulty) {
-  const config = difficultyConfig[difficulty];
   const groupCount = Math.max(2, String(number).length <= 8 ? 2 : String(number).length <= 12 ? 3 : 4);
   const groups = numberToGroups(number, groupCount);
   const changedIndex = randomInt(0, groups.length - 1);
