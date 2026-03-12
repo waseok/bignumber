@@ -13,6 +13,7 @@
   timeLeft: 30,
   soundEnabled: true,
   audioContext: null,
+  roundResolved: false,
 };
 
 const elements = {
@@ -110,6 +111,7 @@ function nextRound() {
   state.currentRound += 1;
   state.timeLeft = state.settings.secondsPerRound;
   state.currentQuestion = generateQuestion(state.settings.mode, state.settings.difficulty);
+  state.roundResolved = false;
 
   state.players.forEach((player) => {
     player.answer = null;
@@ -196,7 +198,7 @@ function renderPlayers() {
       }
     }
 
-    if (state.currentQuestion.reveal && fastestCorrect && fastestCorrect.id === player.id) {
+    if (state.currentQuestion.reveal && fastestCorrect && fastestCorrect.id === player.id && bonusBadge) {
       bonusBadge.classList.remove("hidden");
       bonusBadge.innerHTML = '<span class="bonus-icon">1</span><strong>선착순 보너스</strong>';
     }
@@ -226,7 +228,7 @@ function renderPlayers() {
 
 function submitAnswer(playerId, optionIndex) {
   const player = state.players.find((entry) => entry.id === playerId);
-  if (!player || player.answer !== null || state.currentQuestion.reveal) {
+  if (!player || player.answer !== null || state.currentQuestion.reveal || state.roundResolved) {
     return;
   }
 
@@ -275,6 +277,11 @@ function renderTimer() {
 }
 
 function finishRound() {
+  if (state.roundResolved) {
+    return;
+  }
+
+  state.roundResolved = true;
   clearInterval(state.timerId);
   state.currentQuestion.reveal = true;
   renderPlayers();
@@ -334,6 +341,7 @@ function showFinalResults() {
 
 function resetToSetup() {
   clearInterval(state.timerId);
+  state.roundResolved = false;
   elements.setupPanel.classList.remove("hidden");
   elements.gamePanel.classList.add("hidden");
 }
@@ -694,5 +702,3 @@ function randomInt(min, max) {
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
-
-

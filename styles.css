@@ -37,6 +37,8 @@ button,
 input,
 select {
   font: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .app-shell {
@@ -524,6 +526,55 @@ h1 {
   min-height: 68px;
 }
 
+.bonus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffe7a5, #ffd27f);
+  color: #7a4b00;
+  box-shadow: 0 10px 20px rgba(255, 184, 77, 0.24);
+}
+
+.bonus-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  font-weight: 700;
+}
+
+.bonus-highlight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff3cb, #ffe3a3);
+  color: #7a4b00;
+}
+
+.bonus-highlight-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.bonus-highlight strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
 .results-board {
   display: grid;
   gap: 12px;
@@ -614,56 +665,4 @@ h1 {
     flex-direction: column;
     gap: 12px;
   }
-}
-.bonus-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ffe7a5, #ffd27f);
-  color: #7a4b00;
-  box-shadow: 0 10px 20px rgba(255, 184, 77, 0.24);
-}
-
-.bonus-badge.hidden {
-  display: none !important;
-}
-
-.bonus-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.92);
-  font-weight: 700;
-}
-
-.bonus-highlight {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 12px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #fff3cb, #ffe3a3);
-  color: #7a4b00;
-}
-
-.bonus-highlight-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.9);
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.bonus-highlight strong {
-  display: block;
-  margin-bottom: 4px;
 }
