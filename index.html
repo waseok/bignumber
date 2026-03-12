@@ -14,7 +14,7 @@
         <h1>큰 수 챔피언</h1>
         <p class="hero-text">
           큰 수를 읽고, 한글 수를 숫자로 바꾸고, 두 수를 비교하며
-          최대 6명이 동시에 실력을 겨루는 교실용 게임입니다.
+          1명 연습부터 최대 6명이 함께 활용할 수 있는 교실용 게임입니다.
         </p>
         <div class="hero-actions">
           <button class="ghost-button" id="teacher-toggle" type="button">교사용 설명</button>
@@ -24,10 +24,10 @@
 
       <div class="hero-visual">
         <article class="feature-card warm">
-          <div class="feature-icon">6</div>
+          <div class="feature-icon">1-6</div>
           <div>
-            <h3>동시 대결</h3>
-            <p>최대 6명이 한 화면에서 빠르게 경쟁</p>
+            <h3>연습과 대결</h3>
+            <p>혼자 연습하거나 여러 명이 함께 경쟁</p>
           </div>
         </article>
         <article class="feature-card cool">
@@ -69,7 +69,7 @@
         </article>
         <article>
           <h3>추천 운영</h3>
-          <p>처음 2문제는 함께 풀고, 이후부터는 경쟁 모드로 전환하면 학생들이 규칙을 빠르게 익힙니다.</p>
+          <p>1인 모드로 먼저 감을 익히고, 이후 2명 이상 경쟁 모드로 전환하면 흐름이 더 매끄럽습니다.</p>
         </article>
         <article>
           <h3>질문 포인트</h3>
@@ -94,8 +94,9 @@
             <span class="setting-icon">인원</span>
             <h3>참가 인원</h3>
           </div>
-          <div class="choice-grid five" data-setting="playerCount">
-            <button class="choice-chip active" data-value="2" type="button">2명</button>
+          <div class="choice-grid six" data-setting="playerCount">
+            <button class="choice-chip active" data-value="1" type="button">1명</button>
+            <button class="choice-chip" data-value="2" type="button">2명</button>
             <button class="choice-chip" data-value="3" type="button">3명</button>
             <button class="choice-chip" data-value="4" type="button">4명</button>
             <button class="choice-chip" data-value="5" type="button">5명</button>
@@ -187,7 +188,7 @@
           <p class="question-badge" id="question-badge">읽기 문제</p>
           <h3 id="question-title">아래 수를 바르게 읽은 것을 고르세요.</h3>
           <div id="question-body" class="question-body"></div>
-          <p class="question-hint" id="question-hint"></p>
+          <p id="question-hint" class="question-hint"></p>
         </article>
 
         <section class="player-grid" id="player-grid"></section>

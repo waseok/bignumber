@@ -1,6 +1,6 @@
 ﻿const state = {
   settings: {
-    playerCount: 2,
+    playerCount: 1,
     difficulty: "low",
     mode: "mixed",
     totalRounds: 8,
@@ -80,7 +80,7 @@ function startGame() {
   state.timeLeft = state.settings.secondsPerRound;
   state.players = Array.from({ length: state.settings.playerCount }, (_, index) => ({
     id: index + 1,
-    name: `플레이어 ${index + 1}`,
+    name: state.settings.playerCount === 1 ? "연습 플레이어" : `플레이어 ${index + 1}`,
     score: 0,
     answer: null,
     answeredAt: null,
@@ -131,7 +131,9 @@ function renderRound() {
   elements.questionBadge.textContent = question.badge;
   elements.questionTitle.textContent = question.prompt;
   elements.questionHint.textContent = `${question.hint} 제한 시간 ${state.settings.secondsPerRound}초`;
-  elements.roundFeedback.textContent = "각자 자기 칸에서 답을 눌러 보세요. 빠를수록 점수가 더 높고, 먼저 맞히면 가산점도 받아요.";
+  elements.roundFeedback.textContent = state.settings.playerCount === 1
+    ? "혼자 연습하면서 차근차근 풀어 보세요."
+    : "각자 자기 칸에서 답을 눌러 보세요. 빠를수록 점수가 더 높고, 먼저 맞히면 가산점도 받아요.";
   elements.nextButton.classList.add("hidden");
   elements.restartButton.classList.add("hidden");
   renderTimer();
@@ -186,7 +188,9 @@ function renderPlayers() {
     scorePill.textContent = `${player.score}점`;
 
     if (player.answer !== null && player.answerOrder !== null) {
-      status.textContent = `${player.answerOrder + 1}번째로 답했어요.`;
+      status.textContent = state.settings.playerCount === 1
+        ? "답을 골랐어요."
+        : `${player.answerOrder + 1}번째로 답했어요.`;
     } else {
       status.textContent = "아직 답을 고르지 않았어요.";
     }
@@ -240,7 +244,9 @@ function submitAnswer(playerId, optionIndex) {
 
   if (player.isCorrect) {
     const speedScore = Math.max(10, state.settings.secondsPerRound + 7 - player.answeredAt);
-    const orderBonus = Math.max(0, state.players.length - 1 - player.answerOrder) * 3;
+    const orderBonus = state.settings.playerCount === 1
+      ? 0
+      : Math.max(0, state.players.length - 1 - player.answerOrder) * 3;
     player.score += speedScore + orderBonus;
     playToneSequence([784, 988], 0.04);
   } else {
@@ -307,7 +313,7 @@ function buildRoundFeedback() {
   const fastestCorrect = [...state.players]
     .filter((player) => player.isCorrect)
     .sort((a, b) => a.answerOrder - b.answerOrder)[0];
-  const bonusLine = fastestCorrect
+  const bonusLine = fastestCorrect && state.settings.playerCount > 1
     ? `<div class="bonus-highlight"><div class="bonus-highlight-icon">1</div><div><strong>선착순 보너스</strong><span>${fastestCorrect.name}이 가장 먼저 정답을 맞혀 추가 점수를 받았어요.</span></div></div>`
     : "";
 
@@ -328,12 +334,23 @@ function showFinalResults() {
     </article>
   `).join("");
 
-  elements.roundFeedback.innerHTML = `
-    <div class="results-board">
-      <h3>최종 결과</h3>
-      ${rows}
-    </div>
-  `;
+  elements.roundFeedback.innerHTML = state.settings.playerCount === 1
+    ? `
+      <div class="results-board">
+        <h3>연습 완료</h3>
+        <article>
+          <strong>${ranking[0].name}</strong>
+          <span>${ranking[0].score}점</span>
+        </article>
+      </div>
+    `
+    : `
+      <div class="results-board">
+        <h3>최종 결과</h3>
+        ${rows}
+      </div>
+    `;
+
   playToneSequence([523.25, 659.25, 783.99, 1046.5], 0.06);
   elements.nextButton.classList.add("hidden");
   elements.restartButton.classList.remove("hidden");

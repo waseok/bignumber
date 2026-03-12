@@ -148,13 +148,14 @@ h1 {
 .feature-card.peach { background: var(--peach); }
 
 .feature-icon {
-  width: 56px;
+  min-width: 56px;
   height: 56px;
+  padding: 0 8px;
   border-radius: 18px;
   display: grid;
   place-items: center;
   background: rgba(255,255,255,0.86);
-  font-size: 1.45rem;
+  font-size: 1.2rem;
   color: var(--accent-deep);
 }
 
@@ -238,8 +239,8 @@ h1 {
   gap: 12px;
 }
 
-.choice-grid.five {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+.choice-grid.six {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .choice-grid.four {
@@ -615,7 +616,7 @@ h1 {
 @media (max-width: 1100px) {
   .hero,
   .choice-grid.four,
-  .choice-grid.five,
+  .choice-grid.six,
   .player-grid,
   .teacher-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -645,7 +646,7 @@ h1 {
   .hero,
   .hero-visual,
   .teacher-grid,
-  .choice-grid.five,
+  .choice-grid.six,
   .choice-grid.four,
   .choice-grid.three,
   .player-grid,
